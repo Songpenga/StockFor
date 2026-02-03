@@ -36,7 +36,7 @@ public class KiwoomController {
         try {
             System.out.println("mockkey: [" + mockkey + "]");
             System.out.println("mockmykey: [" + mockmykey + "]");
-            
+
             String jsonData = String.format(
                     "{\"grant_type\":\"client_credentials\",\"appkey\":\"%s\",\"secretkey\":\"%s\"}",
                     mockkey,
