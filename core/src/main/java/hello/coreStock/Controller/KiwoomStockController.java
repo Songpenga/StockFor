@@ -19,9 +19,21 @@ public class KiwoomStockController {
 
     //실시간종목조회순위
     @GetMapping("/ranking")
-    public ResponseEntity<?> getRanking(@RequestParam(defaultValue = "1") String type) {
+    public ResponseEntity<?> getRanking(@RequestParam(name = "queryType", defaultValue = "1") String queryType) {
         try {
-            String result = stkInfoService.getka00198(type);
+            String result = stkInfoService.getka00198(queryType);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    //실시간종목조회순위
+    @GetMapping("/marketList")
+    public ResponseEntity<?> getMarketList(@RequestParam(name = "marketCategory", defaultValue = "0") String marketCategory) {
+        try {
+            String result = stkInfoService.getka10099(marketCategory);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.status(500)
