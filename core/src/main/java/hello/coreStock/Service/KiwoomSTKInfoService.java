@@ -21,7 +21,7 @@ public class KiwoomSTKInfoService extends KiwoomApiService {
         //0 : 코스피, 2 : 인프라투융자, 3 : ELW, 4 : 뮤추얼펀드, 5 : 신주인수권, 6 : 리츠종목, 7 : 신주인수권증서, 8 : ETF, 9 : 하이일드펀드
         //10 : 코스닥, 30 : K-OTC, 50 : 코넥스, 60 : ETN, 70 : 손실제한 ETN, 80 : 금현물, 90 : 변동성 ETN
         String jsonData = String.format("{\"mrkt_tp\":\"%s\"}", marketCategory);
-        return callKiwoomAPI("/api/dostk/stkinfo", "ka00199", jsonData);
+        return callKiwoomAPI("/api/dostk/stkinfo", "ka10099", jsonData);
     }
 
     /*

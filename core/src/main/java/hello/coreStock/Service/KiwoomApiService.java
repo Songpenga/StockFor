@@ -1,5 +1,7 @@
 package hello.coreStock.Service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -13,6 +15,7 @@ import java.util.Scanner;
 * 키움 API 공통 호출 로직
 * */
 public class KiwoomApiService {
+    private static final Logger log = LoggerFactory.getLogger(KiwoomApiService.class);
     @Autowired
     private TokenService tokenService;
 
@@ -55,6 +58,7 @@ public class KiwoomApiService {
             if (responseCode >= 400) {
                 try (Scanner scanner = new Scanner(connection.getErrorStream(), "utf-8")) {
                     String error = scanner.useDelimiter("\\A").next();
+                    log.error(error);
                     throw new RuntimeException("API 호출 실패: " + error);
                 }
             }
