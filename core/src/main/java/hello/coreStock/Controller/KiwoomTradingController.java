@@ -17,9 +17,7 @@ public class KiwoomTradingController {
     @Autowired
     private KiwoomTradingService tradingService;
 
-    /**
-     * 매수 주문
-     */
+    /* 매수 주문 */
     @PostMapping("/buy")
     public ResponseEntity<?> buyStock(@RequestBody sellNBuyOrderRequestDto request) {
         try {
@@ -38,9 +36,9 @@ public class KiwoomTradingController {
         }
     }
 
-    /**
-     * 매도 주문
-     */
+    /*
+    * 매도 주문
+    * */
     @PostMapping("/sell")
     public ResponseEntity<?> sellStock(@RequestBody sellNBuyOrderRequestDto request) {
         try {

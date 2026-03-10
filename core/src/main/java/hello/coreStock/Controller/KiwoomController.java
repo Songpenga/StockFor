@@ -19,14 +19,14 @@ import java.util.Scanner;
 @RequestMapping("/api/kiwoom")  // 기본 경로 설정
 public class KiwoomController {
 
-    @Value("${kiwoom.mockhost}")
-    private String mockhost;
+    @Value("${kiwoom.realhost}")
+    private String realhost;
 
     @Value("${kiwoom.appkey}")
-    private String mockkey;
+    private String appkey;
 
     @Value("${kiwoom.mykey}")
-    private String mockmykey;
+    private String mykey;
 
     // Postman으로 테스트할 엔드포인트
     @PostMapping("/token")
@@ -34,13 +34,13 @@ public class KiwoomController {
         Map<String, Object> result = new HashMap<>();
 
         try {
-            System.out.println("mockkey: [" + mockkey + "]");
-            System.out.println("mockmykey: [" + mockmykey + "]");
+            System.out.println("mockkey: [" + appkey + "]");
+            System.out.println("mockmykey: [" + mykey + "]");
 
             String jsonData = String.format(
                     "{\"grant_type\":\"client_credentials\",\"appkey\":\"%s\",\"secretkey\":\"%s\"}",
-                    mockkey,
-                    mockmykey
+                    appkey,
+                    mykey
             );
 
             String response = fn_au10001(jsonData);
@@ -63,7 +63,7 @@ public class KiwoomController {
         try {
             // 1. 요청할 API URL
             String endpoint = "/oauth2/token";
-            String urlString = mockhost + endpoint;
+            String urlString = realhost + endpoint;
 
             URL url = new URL(urlString);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();

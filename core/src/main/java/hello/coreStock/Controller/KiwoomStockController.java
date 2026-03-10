@@ -36,6 +36,7 @@ public class KiwoomStockController {
             String result = stkInfoService.getka10099(marketCategory);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(500)
                     .body(Map.of("error", e.getMessage()));
         }
