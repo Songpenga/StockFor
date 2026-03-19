@@ -17,17 +17,18 @@ import java.util.Scanner;
 
 @Service
 public class TokenService {
-    @Value("${kiwoom.mockhost}")
+    @Value("${kiwoom.realhost}")
     private String mockhost;
 
     @Value("${kiwoom.appkey}")
-    private String mockkey;
+    private String appkey;
 
     @Value("${kiwoom.mykey}")
-    private String mockmykey;
+    private String mykey;
 
     private String accessToken;
     private LocalDateTime tokenExpireTime;
+
 
     //토큰 발급 또는 갱신
     public synchronized String getValidToken(){
@@ -51,8 +52,8 @@ public class TokenService {
 
             String jsonData = String.format(
                     "{\"grant_type\":\"client_credentials\",\"appkey\":\"%s\",\"secretkey\":\"%s\"}",
-                    mockkey,
-                    mockmykey
+                    appkey,
+                    mykey
             );
 
             String response = getTokenApi(jsonData);
@@ -60,6 +61,7 @@ public class TokenService {
             ObjectMapper mapper = new ObjectMapper();
 
             JsonNode jsonTree = mapper.readTree(response); //JSON을 트리 구조로 다루기 위한 객체
+
             this.accessToken = jsonTree.get("token").asText();
 
             // [response] :: "expires_dt":"20260204094633"

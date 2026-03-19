@@ -19,7 +19,7 @@ public class KiwoomApiService {
     @Autowired
     private TokenService tokenService;
 
-    @Value("${kiwoom.mockhost}")
+    @Value("${kiwoom.realhost}")
     private String host;
 
     /*

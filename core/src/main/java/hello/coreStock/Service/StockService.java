@@ -63,7 +63,7 @@ public class StockService {
                 .queryParam("numOfRows", 10)
                 .queryParam("pageNo", 1)
                 .queryParam("resultType", "json")
-                .build(true)   // ⭐ 이미 인코딩된 값임을 명시
+                .build(true)   //이미 인코딩된 값임을 명시
                 .toUri();
 
 

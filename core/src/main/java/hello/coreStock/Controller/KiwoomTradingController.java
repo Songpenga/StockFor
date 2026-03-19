@@ -21,7 +21,7 @@ public class KiwoomTradingController {
     @PostMapping("/buy")
     public ResponseEntity<?> buyStock(@RequestBody sellNBuyOrderRequestDto request) {
         try {
-            String result = tradingService.buyStock(
+            String result = tradingService.fn_kt10000(
                     request.getDmst_stex_tp(),
                     request.getStk_cd(),
                     request.getOrd_qty(),
@@ -42,7 +42,7 @@ public class KiwoomTradingController {
     @PostMapping("/sell")
     public ResponseEntity<?> sellStock(@RequestBody sellNBuyOrderRequestDto request) {
         try {
-            String result = tradingService.sellStock(
+            String result = tradingService.fn_kt10001(
                     request.getDmst_stex_tp(),
                     request.getStk_cd(),
                     request.getOrd_qty(),
@@ -63,7 +63,7 @@ public class KiwoomTradingController {
     @PostMapping("/order/{orderNo}")
     public ResponseEntity<?> editOrder(@PathVariable editOrderRequestDto request) {
         try {
-            String result = tradingService.editOrder(
+            String result = tradingService.fn_kt10002(
                     request.getDmst_stex_tp(),
                     request.getOrig_ord_no(),
                     request.getStk_cd(),
@@ -84,7 +84,7 @@ public class KiwoomTradingController {
     @DeleteMapping("/order/{orderNo}")
     public ResponseEntity<?> cancelOrder(@PathVariable cancelOrderRequestDto request) {
         try {
-            String result = tradingService.cancelOrder(
+            String result = tradingService.fn_kt10003(
                     request.getDmst_stex_tp(),
                     request.getOrig_ord_no(),
                     request.getStk_cd(),

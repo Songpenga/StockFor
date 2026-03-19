@@ -21,7 +21,7 @@ public class KiwoomStockController {
     @GetMapping("/ranking")
     public ResponseEntity<?> getRanking(@RequestParam(name = "queryType", defaultValue = "1") String queryType) {
         try {
-            String result = stkInfoService.getka00198(queryType);
+            String result = stkInfoService.fn_ka00198(queryType);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.status(500)
@@ -29,11 +29,11 @@ public class KiwoomStockController {
         }
     }
 
-    //실시간종목조회순위
+    //종목정보리스트
     @GetMapping("/marketList")
     public ResponseEntity<?> getMarketList(@RequestParam(name = "marketCategory", defaultValue = "0") String marketCategory) {
         try {
-            String result = stkInfoService.getka10099(marketCategory);
+            String result = stkInfoService.fn_ka00199(marketCategory);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             e.printStackTrace();
@@ -42,11 +42,35 @@ public class KiwoomStockController {
         }
     }
 
-    //주식기본정보요청
-    @GetMapping("/info/{stockCode}")
-    public ResponseEntity<?> getStockInfo(@PathVariable String stockCode) {
+    //주식기본정보조회
+    @GetMapping("/basic-info/{stockCode}")
+    public ResponseEntity<?> StockBasicInfoController(@PathVariable String stockCode) {
         try {
-            String result = stkInfoService.getka10001(stockCode);
+            String result = stkInfoService.fn_ka10001(stockCode);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    //체결정보요청
+    @GetMapping("/trade-info/{stockCode}")
+    public ResponseEntity<?> StockTradeInfoController (@PathVariable String stockCode) {
+        try {
+            String result = stkInfoService.fn_ka10003(stockCode);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    //종목정보조회
+    @GetMapping("/item-info/{stockCode}")
+    public ResponseEntity<?> StockInfoController(@PathVariable String stockCode) {
+        try {
+            String result = stkInfoService.fn_ka00100(stockCode);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.status(500)
