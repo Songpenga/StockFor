@@ -45,11 +45,15 @@ core/src/main/java/hello/coreStock/
 | TR | 기능 | 서비스 메서드 | 상태 |
 |---|---|---|---|
 | ka00198 | 실시간종목조회순위 | fn_ka00198 | ✅ |
-| ka10099 | 종목정보 리스트 | fn_ka00199 ⚠️함수명불일치 | ✅ |
+| ka10099 | 종목정보 리스트 | fn_ka10099 | ✅ |
 | ka10001 | 주식기본정보요청 | fn_ka10001 | ✅ |
 | ka10003 | 체결정보요청 | fn_ka10003 | ✅ |
+| ka10023 | 거래량급증요청 | fn_ka10023 | ✅ |
+| ka10027 | 전일대비등락률상위요청 | fn_ka10027 | ✅ |
+| ka10030 | 당일거래량상위요청 | fn_ka10030 | ✅ |
+| ka10032 | 거래대금상위요청 | fn_ka10032 | ✅ |
 | ka10095 | 관심종목정보요청 | fn_ka10095 | ✅ |
-| ka10100 | 종목정보조회 | fn_ka00100 ⚠️함수명불일치 | ✅ |
+| ka10100 | 종목정보조회 | fn_ka10100 | ✅ |
 | ka10101 | 업종코드 리스트 | fn_ka10101 | ✅ |
 
 ### ETF 정보 조회 (KiwoomETFInfoService)
@@ -57,7 +61,7 @@ core/src/main/java/hello/coreStock/
 |---|---|---|---|
 | ka40002 | ETF종목정보요청 | fn_ka40002 | ✅ |
 | ka40003 | ETF일별추이요청 | fn_ka40003 | ✅ |
-| ka40004 | ETF전체시세요청 | fn_ka40004 (파라미터 하드코딩) | ⚠️ |
+| ka40004 | ETF전체시세요청 | fn_ka40004 | ✅ |
 | ka40006 | ETF시간대별추이요청 | fn_ka40006 | ✅ |
 | ka40007 | ETF시간대별체결요청 | fn_ka40007 | ✅ |
 | ka40008 | ETF일자별체결요청 | fn_ka40008 | ✅ |
@@ -80,8 +84,8 @@ core/src/main/java/hello/coreStock/
 | kt10003 | 주식 취소주문 | fn_kt10003 | ✅ |
 
 ## 알려진 문제 (TODO)
-1. `KiwoomSTKInfoService`: `fn_ka00199` → `fn_ka10099`로 리네임 필요
-2. `KiwoomSTKInfoService`: `fn_ka00100` → `fn_ka10100`으로 리네임 필요
+1. ~~`KiwoomSTKInfoService`: `fn_ka00199` → `fn_ka10099`로 리네임 필요~~ ✅ 완료
+2. ~~`KiwoomSTKInfoService`: `fn_ka00100` → `fn_ka10100`으로 리네임 필요~~ ✅ 완료
 3. `TokenService`: 변수명 `mockhost` → `host`로 리네임 필요 (realhost 값 사용중)
 4. `KiwoomETFInfoService`: 불필요한 import 제거 (`org.springframework.data.repository.query.Param`)
 5. `KiwoomETFInfoService.fn_ka40004`: 파라미터 하드코딩 → 파라미터화 검토
@@ -101,10 +105,11 @@ core/src/main/java/hello/coreStock/
 - [ ] `.gitignore` 설정 — `application.properties`, `kiwoom_api.yml`, `.idea/` 제외
 - [ ] `application.properties` 환경변수화 — 키값을 `${ENV_VAR}` 형태로 분리
 - [ ] Gradle 빌드 확인 — `./gradlew build` 로 JAR 생성되는지 확인
-- [ ] 함수명 오타 수정 — `fn_ka00199` → `fn_ka10099`, `fn_ka00100` → `fn_ka10100`
+- [o] 함수명 오타 수정 — `fn_ka00199` → `fn_ka10099`, `fn_ka00100` → `fn_ka10100`
 - [ ] 변수명 오타 수정 — `TokenService`의 `mockhost` → `host`
-- [ ] 불필요한 import 제거 — `KiwoomETFInfoService`의 `Param` import
-- [ ] `fn_ka40004` 파라미터 하드코딩 → 파라미터화
+- [o] 불필요한 import 제거 — `KiwoomETFInfoService`의 `Param` import
+- [o] `fn_ka40004` 파라미터 하드코딩 → 파라미터화
+- [o] 순위정보 TR 추가 — ka10023(거래량급증), ka10027(등락률상위), ka10030(거래량상위), ka10032(거래대금상위)
 
 ### EC2 배포를 위해 해야 하는 작업
 - [ ] EC2 인스턴스 생성 (Amazon Linux 2 또는 Ubuntu 추천)

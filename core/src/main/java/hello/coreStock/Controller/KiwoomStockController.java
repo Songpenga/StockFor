@@ -33,7 +33,7 @@ public class KiwoomStockController {
     @GetMapping("/marketList")
     public ResponseEntity<?> getMarketList(@RequestParam(name = "marketCategory", defaultValue = "0") String marketCategory) {
         try {
-            String result = stkInfoService.fn_ka00199(marketCategory);
+            String result = stkInfoService.fn_ka10099(marketCategory);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             e.printStackTrace();
@@ -70,7 +70,84 @@ public class KiwoomStockController {
     @GetMapping("/item-info/{stockCode}")
     public ResponseEntity<?> StockInfoController(@PathVariable String stockCode) {
         try {
-            String result = stkInfoService.fn_ka00100(stockCode);
+            String result = stkInfoService.fn_ka10100(stockCode);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // 거래량급증요청 (ka10023)
+    @GetMapping("/volume-surge")
+    public ResponseEntity<?> getVolumeSurge(
+            @RequestParam(name = "mrktTp", defaultValue = "000") String mrktTp,
+            @RequestParam(name = "sortTp", defaultValue = "1") String sortTp,
+            @RequestParam(name = "tmTp", defaultValue = "2") String tmTp,
+            @RequestParam(name = "trdeQtyTp", defaultValue = "5") String trdeQtyTp,
+            @RequestParam(name = "tm", defaultValue = "") String tm,
+            @RequestParam(name = "stkCnd", defaultValue = "0") String stkCnd,
+            @RequestParam(name = "pricTp", defaultValue = "0") String pricTp,
+            @RequestParam(name = "stexTp", defaultValue = "3") String stexTp) {
+        try {
+            String result = stkInfoService.fn_ka10023(mrktTp, sortTp, tmTp, trdeQtyTp, tm, stkCnd, pricTp, stexTp);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // 전일대비등락률상위요청 (ka10027)
+    @GetMapping("/price-change-ranking")
+    public ResponseEntity<?> getPriceChangeRanking(
+            @RequestParam(name = "mrktTp", defaultValue = "000") String mrktTp,
+            @RequestParam(name = "sortTp", defaultValue = "1") String sortTp,
+            @RequestParam(name = "trdeQtyCnd", defaultValue = "0000") String trdeQtyCnd,
+            @RequestParam(name = "stkCnd", defaultValue = "0") String stkCnd,
+            @RequestParam(name = "crdCnd", defaultValue = "0") String crdCnd,
+            @RequestParam(name = "updownIncls", defaultValue = "1") String updownIncls,
+            @RequestParam(name = "pricCnd", defaultValue = "0") String pricCnd,
+            @RequestParam(name = "trdePricaCnd", defaultValue = "0") String trdePricaCnd,
+            @RequestParam(name = "stexTp", defaultValue = "3") String stexTp) {
+        try {
+            String result = stkInfoService.fn_ka10027(mrktTp, sortTp, trdeQtyCnd, stkCnd, crdCnd, updownIncls, pricCnd, trdePricaCnd, stexTp);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // 당일거래량상위요청 (ka10030)
+    @GetMapping("/volume-ranking")
+    public ResponseEntity<?> getDailyVolumeRanking(
+            @RequestParam(name = "mrktTp", defaultValue = "000") String mrktTp,
+            @RequestParam(name = "sortTp", defaultValue = "1") String sortTp,
+            @RequestParam(name = "mangStkIncls", defaultValue = "0") String mangStkIncls,
+            @RequestParam(name = "crdTp", defaultValue = "0") String crdTp,
+            @RequestParam(name = "trdeQtyTp", defaultValue = "0") String trdeQtyTp,
+            @RequestParam(name = "pricTp", defaultValue = "0") String pricTp,
+            @RequestParam(name = "trdePricaTp", defaultValue = "0") String trdePricaTp,
+            @RequestParam(name = "mrktOpenTp", defaultValue = "0") String mrktOpenTp,
+            @RequestParam(name = "stexTp", defaultValue = "3") String stexTp) {
+        try {
+            String result = stkInfoService.fn_ka10030(mrktTp, sortTp, mangStkIncls, crdTp, trdeQtyTp, pricTp, trdePricaTp, mrktOpenTp, stexTp);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // 거래대금상위요청 (ka10032)
+    @GetMapping("/trading-value-ranking")
+    public ResponseEntity<?> getTradingValueRanking(
+            @RequestParam(name = "mrktTp", defaultValue = "001") String mrktTp,
+            @RequestParam(name = "mangStkIncls", defaultValue = "0") String mangStkIncls,
+            @RequestParam(name = "stexTp", defaultValue = "3") String stexTp) {
+        try {
+            String result = stkInfoService.fn_ka10032(mrktTp, mangStkIncls, stexTp);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.status(500)

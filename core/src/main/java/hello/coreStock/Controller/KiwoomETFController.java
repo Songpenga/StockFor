@@ -42,11 +42,17 @@ public class KiwoomETFController {
         }
     }
 
-    //ETF전체시세요청 :: etf 전체 시세가 가져와짐
-    @PostMapping("/market-all-price")
-    public ResponseEntity<?> EtfMarketAllPriceController(String stk_cd) {
+    //ETF전체시세요청
+    @GetMapping("/market-all-price")
+    public ResponseEntity<?> EtfMarketAllPriceController(
+            @RequestParam(name = "txonType", defaultValue = "0") String txonType,
+            @RequestParam(name = "navpre", defaultValue = "0") String navpre,
+            @RequestParam(name = "mngmcomp", defaultValue = "0000") String mngmcomp,
+            @RequestParam(name = "txonYn", defaultValue = "0") String txonYn,
+            @RequestParam(name = "traceIdex", defaultValue = "0") String traceIdex,
+            @RequestParam(name = "stexTp", defaultValue = "3") String stexTp) {
         try {
-            String result = etfInfoService.fn_ka40004();
+            String result = etfInfoService.fn_ka40004(txonType, navpre, mngmcomp, txonYn, traceIdex, stexTp);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.status(500)

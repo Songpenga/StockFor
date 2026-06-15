@@ -30,7 +30,6 @@ public class StockController {
     @GetMapping("/fetch")
     public ResponseEntity<Map<String, Object>> fetchAndSaveStockData(@RequestParam(name = "date") String date){//YYYYMMDD 형식
 
-        log.info("주식 데이터 수집 시작 ", date );
 
         try {
             StockApiResponseDto apiResponseDto = stockService.StockDataGetApi(date, null);

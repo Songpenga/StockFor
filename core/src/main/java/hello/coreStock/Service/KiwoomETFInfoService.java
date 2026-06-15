@@ -1,6 +1,5 @@
 package hello.coreStock.Service;
 
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -23,11 +22,14 @@ public class KiwoomETFInfoService extends KiwoomApiService{
     }
 
     // ETF전체시세요청
-    public String fn_ka40004() {
+    // txon_type: 과세유형, navpre: NAV대비괴리, mngmcomp: 운용사코드(0000:전체)
+    // txon_yn: 과세여부, trace_idex: 추적지수, stex_tp: 1:KRX, 2:NXT, 3:통합
+    public String fn_ka40004(String txonType, String navpre, String mngmcomp,
+                              String txonYn, String traceIdex, String stexTp) {
         String jsonData = String.format(
-                "{\"txon_type\" : \"0\",\"navpre\" : \"0\",\"mngmcomp\" : \"0000\",\"txon_yn\" : \"0\"," +
-                        "\"trace_idex\" : \"0\",\"stex_tp\" : \"1\"}"
-        );
+                "{\"txon_type\":\"%s\",\"navpre\":\"%s\",\"mngmcomp\":\"%s\"," +
+                "\"txon_yn\":\"%s\",\"trace_idex\":\"%s\",\"stex_tp\":\"%s\"}",
+                txonType, navpre, mngmcomp, txonYn, traceIdex, stexTp);
         return callKiwoomAPI("/api/dostk/etf", "ka40004", jsonData);
     }
 
