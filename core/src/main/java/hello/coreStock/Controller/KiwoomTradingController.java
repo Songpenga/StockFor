@@ -60,8 +60,8 @@ public class KiwoomTradingController {
     /*
     * 주문 정정
     * */
-    @PostMapping("/order/{orderNo}")
-    public ResponseEntity<?> editOrder(@PathVariable editOrderRequestDto request) {
+    @PostMapping("/edit")
+    public ResponseEntity<?> editOrder(@RequestBody editOrderRequestDto request) {
         try {
             String result = tradingService.fn_kt10002(
                     request.getDmst_stex_tp(),
@@ -81,8 +81,8 @@ public class KiwoomTradingController {
     /*
      * 주문 취소
      * */
-    @DeleteMapping("/order/{orderNo}")
-    public ResponseEntity<?> cancelOrder(@PathVariable cancelOrderRequestDto request) {
+    @PostMapping("/cancel")
+    public ResponseEntity<?> cancelOrder(@RequestBody cancelOrderRequestDto request) {
         try {
             String result = tradingService.fn_kt10003(
                     request.getDmst_stex_tp(),

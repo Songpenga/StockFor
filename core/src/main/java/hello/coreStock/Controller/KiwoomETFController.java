@@ -85,8 +85,8 @@ public class KiwoomETFController {
     }
 
     //ETF시간대별체결요청
-    @PostMapping("/hourly-trade")
-    public ResponseEntity<?> EtfHourlyTrendController(String stk_cd) {
+    @PostMapping("/hourly-contract")
+    public ResponseEntity<?> EtfHourlyContractController(String stk_cd) {
         try {
             String result = etfInfoService.fn_ka40009(stk_cd);
             return ResponseEntity.ok(result);
@@ -97,8 +97,8 @@ public class KiwoomETFController {
     }
 
     //ETF시간대별추이요청
-    @PostMapping("/hourly-trade")
-    public ResponseEntity<?> EtfHourlyContractController(String stk_cd) {
+    @PostMapping("/hourly-trend")
+    public ResponseEntity<?> EtfHourlyTrendController(String stk_cd) {
         try {
             String result = etfInfoService.fn_ka40010(stk_cd);
             return ResponseEntity.ok(result);
