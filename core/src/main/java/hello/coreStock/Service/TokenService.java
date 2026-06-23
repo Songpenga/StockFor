@@ -18,7 +18,7 @@ import java.util.Scanner;
 @Service
 public class TokenService {
     @Value("${kiwoom.realhost}")
-    private String mockhost;
+    private String host;
 
     @Value("${kiwoom.appkey}")
     private String appkey;
@@ -82,7 +82,7 @@ public class TokenService {
 
         // 1. 요청할 API URL
         String endpoint = "/oauth2/token";
-        String urlString = mockhost + endpoint;
+        String urlString = host + endpoint;
 
         URL url = new URL(urlString);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();

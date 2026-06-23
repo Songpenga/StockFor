@@ -155,4 +155,32 @@ public class KiwoomStockController {
         }
     }
 
+    // 관심종목정보요청 (ka10095)
+    // stockCode: 종목코드, 여러 종목은 | 로 구분 (예: 005930|039490)
+    @GetMapping("/interest-info")
+    public ResponseEntity<?> getInterestStockInfo(
+            @RequestParam(name = "stockCode") String stockCode) {
+        try {
+            String result = stkInfoService.fn_ka10095(stockCode);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // 업종코드 리스트 (ka10101)
+    // mrktTp: 0:코스피, 1:코스닥, 2:KOSPI200, 4:KOSPI100, 7:KRX100
+    @GetMapping("/industry-codes")
+    public ResponseEntity<?> getIndustryCodes(
+            @RequestParam(name = "mrktTp", defaultValue = "0") String mrktTp) {
+        try {
+            String result = stkInfoService.fn_ka10101(mrktTp);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
 }

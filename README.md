@@ -18,18 +18,25 @@ core/src/main/java/hello/coreStock/
 │   ├── KiwoomStockController.java     # 주식 정보 조회
 │   ├── KiwoomETFController.java       # ETF 정보 조회
 │   ├── KiwoomIndsController.java      # 업종 정보 조회
-│   └── KiwoomTradingController.java   # 주문 (매수/매도/정정/취소)
+│   ├── KiwoomTradingController.java   # 주문 (매수/매도/정정/취소)
+│   └── StockController.java           # 주가 데이터 DB 저장/조회
 ├── Service/
 │   ├── KiwoomApiService.java          # 공통 HTTP 호출 (부모 클래스)
 │   ├── TokenService.java              # 토큰 자동 발급/갱신
 │   ├── KiwoomSTKInfoService.java      # 주식 정보 TR
 │   ├── KiwoomETFInfoService.java      # ETF 정보 TR
 │   ├── KiwoomIndsInfoService.java     # 업종 정보 TR
-│   └── KiwoomTradingService.java      # 주문 TR
-└── Dto/
-    ├── sellNBuyOrderRequestDto.java   # 매수/매도 요청
-    ├── editOrderRequestDto.java       # 정정 요청
-    └── cancelOrderRequestDto.java     # 취소 요청
+│   ├── KiwoomTradingService.java      # 주문 TR
+│   └── StockService.java              # 주가 데이터 API 수집 및 DB 저장
+├── Dto/
+│   ├── sellNBuyOrderRequestDto.java   # 매수/매도 요청
+│   ├── editOrderRequestDto.java       # 정정 요청
+│   └── cancelOrderRequestDto.java     # 취소 요청
+├── stockInterface/
+│   └── StockPriceRepository.java      # 주가 DB 레포지토리
+├── StockPrice.java                    # 주가 엔티티
+├── StockApiResponseDto.java           # 주가 API 응답 DTO
+└── StockApiItemDto.java               # 주가 API 아이템 DTO
 ```
 
 ## 환경 설정
@@ -65,6 +72,12 @@ kiwoom.mykey=YOUR_SECRET_KEY
 | GET | `/api/stock/basic-info/{stockCode}` | 주식 기본 정보 | ka10001 | `stockCode` (예: 005930) |
 | GET | `/api/stock/trade-info/{stockCode}` | 체결 정보 | ka10003 | `stockCode` |
 | GET | `/api/stock/item-info/{stockCode}` | 종목 상세 정보 | ka10100 | `stockCode` |
+| GET | `/api/stock/volume-surge` | 거래량 급증 | ka10023 | `mrktTp`, `sortTp`, `tmTp`, `trdeQtyTp`, `tm`, `stkCnd`, `pricTp`, `stexTp` |
+| GET | `/api/stock/price-change-ranking` | 전일대비 등락률 상위 | ka10027 | `mrktTp`, `sortTp`, `trdeQtyCnd`, `stkCnd`, `crdCnd`, `updownIncls`, `pricCnd`, `trdePricaCnd`, `stexTp` |
+| GET | `/api/stock/volume-ranking` | 당일 거래량 상위 | ka10030 | `mrktTp`, `sortTp`, `mangStkIncls`, `crdTp`, `trdeQtyTp`, `pricTp`, `trdePricaTp`, `mrktOpenTp`, `stexTp` |
+| GET | `/api/stock/trading-value-ranking` | 거래대금 상위 | ka10032 | `mrktTp`, `mangStkIncls`, `stexTp` |
+| GET | `/api/stock/interest-info` | 관심종목 정보 (복수 종목) | ka10095 | `stockCode` (복수 시 `\|` 구분, 예: `005930\|039490`) |
+| GET | `/api/stock/industry-codes` | 업종코드 리스트 | ka10101 | `mrktTp` (0:코스피, 1:코스닥, 2:KOSPI200, 4:KOSPI100, 7:KRX100) |
 
 ---
 
@@ -74,10 +87,11 @@ kiwoom.mykey=YOUR_SECRET_KEY
 |---|---|---|---|---|
 | POST | `/api/etf/item-info` | ETF 종목 정보 | ka40002 | `stk_cd` |
 | POST | `/api/etf/daily-history` | ETF 일별 추이 | ka40003 | `stk_cd` |
-| POST | `/api/etf/market-all-price` | ETF 전체 시세 | ka40004 | 없음 (고정 파라미터) |
+| GET | `/api/etf/market-all-price` | ETF 전체 시세 | ka40004 | `txonType`, `navpre`, `mngmcomp`, `txonYn`, `traceIdex`, `stexTp` |
 | POST | `/api/etf/hourly-detail-trade` | ETF 시간대별 추이 | ka40006 | `stk_cd` |
 | POST | `/api/etf/daily-trade` | ETF 일자별 체결 | ka40008 | `stk_cd` |
-| POST | `/api/etf/hourly-trade` | ETF 시간대별 체결 | ka40009 | `stk_cd` |
+| POST | `/api/etf/hourly-contract` | ETF 시간대별 체결 | ka40009 | `stk_cd` |
+| POST | `/api/etf/hourly-trend` | ETF 시간대별 추이 | ka40010 | `stk_cd` |
 
 ---
 
@@ -102,8 +116,8 @@ kiwoom.mykey=YOUR_SECRET_KEY
 |---|---|---|---|---|
 | POST | `/api/trade/buy` | 매수 주문 | kt10000 | `sellNBuyOrderRequestDto` |
 | POST | `/api/trade/sell` | 매도 주문 | kt10001 | `sellNBuyOrderRequestDto` |
-| POST | `/api/trade/order/{orderNo}` | 주문 정정 | kt10002 | `editOrderRequestDto` |
-| DELETE | `/api/trade/order/{orderNo}` | 주문 취소 | kt10003 | `cancelOrderRequestDto` |
+| POST | `/api/trade/edit` | 주문 정정 | kt10002 | `editOrderRequestDto` |
+| POST | `/api/trade/cancel` | 주문 취소 | kt10003 | `cancelOrderRequestDto` |
 
 #### 매수/매도 Request Body (`sellNBuyOrderRequestDto`)
 
@@ -147,11 +161,16 @@ kiwoom.mykey=YOUR_SECRET_KEY
 
 ---
 
+### 주가 DB 조회 `/api/stocks`
+
+| Method | 엔드포인트 | 기능 | 파라미터 |
+|---|---|---|---|
+| GET | `/api/stocks/fetch` | API 데이터 수집 후 DB 저장 | `date` (YYYYMMDD) |
+| GET | `/api/stocks/code/{srtnCd}` | 종목코드로 주가 조회 | `srtnCd` |
+| GET | `/api/stocks/date/{date}` | 날짜별 주가 조회 | `date` (yyyy-MM-dd) |
+
+---
+
 ## Known Issues
 
-| 위치 | 문제 | 심각도 |
-|---|---|---|
-| `KiwoomETFController` | `/api/etf/hourly-trade` 경로에 ka40009, ka40010 두 메서드가 중복 매핑 → ka40010 동작 안 함 | 버그 |
-| `KiwoomTradingController` | 정정/취소 엔드포인트에서 `@PathVariable`로 DTO를 받으려 함 → `@RequestBody`로 수정 필요 | 버그 |
-| `KiwoomSTKInfoService` | `fn_ka00199` (실제 TR: ka10099), `fn_ka00100` (실제 TR: ka10100) 함수명 오타 | 가독성 |
-| `TokenService` | `@Value("${kiwoom.realhost}")` 를 `mockhost` 변수명으로 받음 | 가독성 |
+---
