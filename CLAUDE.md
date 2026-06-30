@@ -86,10 +86,9 @@ core/src/main/java/hello/coreStock/
 ## 알려진 문제 (TODO)
 1. ~~`KiwoomSTKInfoService`: `fn_ka00199` → `fn_ka10099`로 리네임 필요~~ ✅ 완료
 2. ~~`KiwoomSTKInfoService`: `fn_ka00100` → `fn_ka10100`으로 리네임 필요~~ ✅ 완료
-3. `TokenService`: 변수명 `mockhost` → `host`로 리네임 필요 (realhost 값 사용중)
-4. `KiwoomETFInfoService`: 불필요한 import 제거 (`org.springframework.data.repository.query.Param`)
-5. `KiwoomETFInfoService.fn_ka40004`: 파라미터 하드코딩 → 파라미터화 검토
-6. 미구현 TR: ka10002(주식거래원요청), kt10006~kt10009(신용주문) 등
+3. ~~`TokenService`: 변수명 `mockhost` → `host`로 리네임 필요 (realhost 값 사용중)~~ ✅ 완료
+4. ~~`KiwoomETFInfoService`: 불필요한 import 제거 (`org.springframework.data.repository.query.Param`)~~ ✅ 완료
+5. ~~`KiwoomETFInfoService.fn_ka40004`: 파라미터 하드코딩 → 파라미터화 검토~~ ✅ 완료
 
 ## API 공통 스펙
 - Base URL: `${kiwoom.realhost}` (application.properties에서 설정)
@@ -102,20 +101,69 @@ core/src/main/java/hello/coreStock/
 ## 작업 체크리스트
 
 ### 지금 당장 할 수 있는 작업
-- [ ] `.gitignore` 설정 — `application.properties`, `kiwoom_api.yml`, `.idea/` 제외
+- [o] `.gitignore` 설정 — `application.properties`, `kiwoom_api.yml`, `.idea/` 제외
 - [ ] `application.properties` 환경변수화 — 키값을 `${ENV_VAR}` 형태로 분리
-- [ ] Gradle 빌드 확인 — `./gradlew build` 로 JAR 생성되는지 확인
+- [o] Gradle 빌드 확인 — `./gradlew build` 로 JAR 생성되는지 확인
 - [o] 함수명 오타 수정 — `fn_ka00199` → `fn_ka10099`, `fn_ka00100` → `fn_ka10100`
-- [ ] 변수명 오타 수정 — `TokenService`의 `mockhost` → `host`
+- [o] 변수명 오타 수정 — `TokenService`의 `mockhost` → `host`
 - [o] 불필요한 import 제거 — `KiwoomETFInfoService`의 `Param` import
 - [o] `fn_ka40004` 파라미터 하드코딩 → 파라미터화
 - [o] 순위정보 TR 추가 — ka10023(거래량급증), ka10027(등락률상위), ka10030(거래량상위), ka10032(거래대금상위)
 
 ### EC2 배포를 위해 해야 하는 작업
-- [ ] EC2 인스턴스 생성 (Amazon Linux 2 또는 Ubuntu 추천)
-- [ ] EC2에 Java 17 설치
-- [ ] 보안 그룹 설정 — Spring Boot 기본 포트 8080 열기
-- [ ] JAR 파일 EC2로 업로드 (`scp` 사용)
-- [ ] EC2에 `application.properties` 또는 환경변수 직접 설정
-- [ ] EC2에서 JAR 실행 확인
-- [ ] (선택) systemd 서비스 등록 — 서버 재시작 시 자동 실행
+- [o] EC2 인스턴스 생성 (Ubuntu 26.04 LTS)
+- [o] EC2에 Java 설치 (OpenJDK 21)
+- [o] 보안 그룹 설정 — 8080 포트 인바운드 오픈
+- [o] JAR 파일 EC2로 업로드 (`scp` 사용, WSL에서 실행)
+- [o] EC2에 `kiwoom_api.yml` 직접 생성 (외부 설정 파일 방식)
+- [o] 키움 API IP 화이트리스트에 EC2 IP 등록 (13.210.159.103)
+- [o] EC2에서 nohup 백그라운드 실행 확인
+- [o] API 정상 동작 확인 — ka10001 삼성전자 기본정보 조회 성공
+- [ ] systemd 서비스 등록 — EC2 재시작 시 자동 실행
+- [ ] AWS CloudWatch 연동 — 로그 모니터링
+- [ ] nginx 리버스 프록시 설정 — 80포트로 8080 포워딩
+- [ ] GitHub Actions CI/CD 구성
+
+## 보안 TODO
+
+### 지금 당장
+- [ ] AWS 보안 그룹 8080 포트를 내 IP로만 좁히기 — `0.0.0.0/0` → `My IP` (매수/매도 엔드포인트가 인증 없이 열려있으므로 즉시 처리)
+- [ ] 블로그 발행 전 EC2 IP 마스킹 — `13.210.159.103` → `13.x.x.x` 또는 `YOUR_EC2_IP`
+- [ ] `logging.level.root=DEBUG` → `WARN` 으로 변경 후 재배포 — DEBUG 로그에 `authorization: Bearer 토큰값` 이 그대로 app.log에 기록되고 있음
+
+### 단기 (CI/CD 작업 전후)
+- [ ] 매수/매도 엔드포인트 API Key 인증 추가 — 헤더 `X-API-KEY` 없으면 403 반환 (인터셉터로 구현)
+- [ ] Swagger UI 접근 제한 — 보안 그룹을 내 IP로 좁히면 같이 해결되나, 나중에 공개 시 별도 처리 필요
+
+### 중기 (로그인 페이지 작업 시)
+- [ ] Spring Security + JWT 로그인 구현
+- [ ] 경로별 권한 분리 — `/api/stock/**` 인증 불필요 / `/api/trade/**` 로그인 필수
+- [ ] HTTPS 적용 — nginx 리버스 프록시 설정 시 같이 처리
+
+> **주의:** 키움 IP 화이트리스트는 "다른 서버가 키움에 직접 요청하는 것"만 막음.
+> "아무나 내 앱을 거쳐서 키움에 요청하는 것"은 앱 레벨 인증으로 별도로 막아야 함.
+
+---
+
+## EC2 서버 정보
+- IP: 13.210.159.103
+- OS: Ubuntu 26.04 LTS
+- Java: OpenJDK 21
+- 포트: 8080
+- JAR: /home/ubuntu/core-0.0.1-SNAPSHOT.jar
+- 설정: /home/ubuntu/kiwoom_api.yml
+- 로그: /home/ubuntu/app.log
+- SSH 키: ~/.ssh/stockFor.pem (WSL 경로)
+- 실행 방식: nohup 백그라운드
+
+### SSH 접속
+```bash
+ssh -i ~/.ssh/stockFor.pem ubuntu@13.210.159.103
+```
+
+### 재배포 순서
+```
+1. 로컬: ./gradlew bootJar (core/ 디렉토리에서)
+2. 로컬: scp로 JAR 업로드
+3. EC2: 기존 프로세스 kill 후 nohup 재실행
+```
