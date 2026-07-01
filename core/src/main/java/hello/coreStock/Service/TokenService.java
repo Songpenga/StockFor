@@ -2,6 +2,7 @@ package hello.coreStock.Service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
+@Slf4j
 @Service
 public class TokenService {
     @Value("${kiwoom.realhost}")
@@ -70,7 +72,7 @@ public class TokenService {
             String expires_dt = jsonTree.get("expires_dt").asText();
             this.tokenExpireTime = LocalDateTime.parse(expires_dt, expFormatter);
 
-            System.out.println("토큰발급 성공. 만료시간 : " + tokenExpireTime);
+            log.info("토큰발급 성공. 만료시간 : {}", tokenExpireTime);
 
         } catch (Exception e) {
 

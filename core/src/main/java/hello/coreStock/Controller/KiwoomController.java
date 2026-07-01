@@ -1,5 +1,6 @@
 package hello.coreStock.Controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,6 +16,7 @@ import java.util.Map;
 import java.util.Scanner;
 
 // 접근토큰 발급
+@Slf4j
 @RestController
 @RequestMapping("/api/kiwoom")  // 기본 경로 설정
 public class KiwoomController {
@@ -34,9 +36,6 @@ public class KiwoomController {
         Map<String, Object> result = new HashMap<>();
 
         try {
-            System.out.println("mockkey: [" + appkey + "]");
-            System.out.println("mockmykey: [" + mykey + "]");
-
             String jsonData = String.format(
                     "{\"grant_type\":\"client_credentials\",\"appkey\":\"%s\",\"secretkey\":\"%s\"}",
                     appkey,
@@ -80,24 +79,24 @@ public class KiwoomController {
             }
 
             // 4. 응답 헤더 출력
-            System.out.println("Code: "+ connection.getResponseCode());
-            System.out.println("Header:");
+            log.debug("Code: {}", connection.getResponseCode());
+            log.debug("Header:");
             String[] headerKeys = {"cont-yn","next-key","api-id"};
             connection.getHeaderFields().forEach((key, value) -> {
                 if(Arrays.asList(headerKeys).contains(key)){
-                    System.out.println("    " + key + ": " + value.get(0));
+                    log.debug("    {}: {}", key, value.get(0));
                 }
             });
 
             // 5. 응답 본문 출력
-            System.out.println("Body:");
+            log.debug("Body:");
             InputStream errorStatus = (connection.getResponseCode() >= 400)
                     ? connection.getErrorStream()
                     : connection.getInputStream();
 
             try (Scanner scanner = new Scanner(errorStatus, "utf-8")) {
                 String response = scanner.useDelimiter("\\A").next();
-                System.out.println("결과 여부 및 상세 내용: " + response);
+                log.debug("결과 여부 및 상세 내용: {}", response);
                 responseBody.append(response);
             }
 

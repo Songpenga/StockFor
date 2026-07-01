@@ -67,7 +67,7 @@ public class StockService {
                 .toUri();
 
 
-        System.out.println("테스트 URL: " + uri);
+        log.debug("테스트 URL: {}", uri);
 
         try{
             StockApiResponseDto response = restTemplate.getForObject(uri, StockApiResponseDto.class);

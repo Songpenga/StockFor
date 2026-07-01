@@ -31,6 +31,10 @@ core/src/main/java/hello/coreStock/
 │   ├── sellNBuyOrderRequestDto.java  # 매수/매도 요청 DTO
 │   ├── editOrderRequestDto.java      # 정정 요청 DTO
 │   └── cancelOrderRequestDto.java    # 취소 요청 DTO
+├── interceptor/
+│   └── ApiKeyInterceptor.java        # X-API-KEY 헤더 인증 (/api/trade/**)
+├── config/
+│   └── WebMvcConfig.java             # 인터셉터 경로 등록
 └── RestTemplateConfig.java
 ```
 
@@ -102,7 +106,7 @@ core/src/main/java/hello/coreStock/
 
 ### 지금 당장 할 수 있는 작업
 - [o] `.gitignore` 설정 — `application.properties`, `kiwoom_api.yml`, `.idea/` 제외
-- [ ] `application.properties` 환경변수화 — 키값을 `${ENV_VAR}` 형태로 분리
+- [o] `application.properties` 환경변수화 — EC2 `kiwoom_api.yml` 환경변수 참조로 변경, `.env` 파일로 주입
 - [o] Gradle 빌드 확인 — `./gradlew build` 로 JAR 생성되는지 확인
 - [o] 함수명 오타 수정 — `fn_ka00199` → `fn_ka10099`, `fn_ka00100` → `fn_ka10100`
 - [o] 변수명 오타 수정 — `TokenService`의 `mockhost` → `host`
@@ -116,29 +120,29 @@ core/src/main/java/hello/coreStock/
 - [o] 보안 그룹 설정 — 8080 포트 인바운드 오픈
 - [o] JAR 파일 EC2로 업로드 (`scp` 사용, WSL에서 실행)
 - [o] EC2에 `kiwoom_api.yml` 직접 생성 (외부 설정 파일 방식)
-- [o] 키움 API IP 화이트리스트에 EC2 IP 등록 (13.210.159.103)
+- [o] 키움 API IP 화이트리스트에 EC2 IP 등록 (13.x.x.x)
 - [o] EC2에서 nohup 백그라운드 실행 확인
 - [o] API 정상 동작 확인 — ka10001 삼성전자 기본정보 조회 성공
-- [ ] systemd 서비스 등록 — EC2 재시작 시 자동 실행
+- [o] nginx 리버스 프록시 설정 — 80포트로 8080 포워딩 완료 (2026-06-30)
+- [o] systemd 서비스 등록 — start.sh 방식으로 EC2 재시작 시 자동 실행, 앱 죽으면 자동 재시작 (2026-06-30)
 - [ ] AWS CloudWatch 연동 — 로그 모니터링
-- [ ] nginx 리버스 프록시 설정 — 80포트로 8080 포워딩
 - [ ] GitHub Actions CI/CD 구성
 
 ## 보안 TODO
 
 ### 지금 당장
-- [ ] AWS 보안 그룹 8080 포트를 내 IP로만 좁히기 — `0.0.0.0/0` → `My IP` (매수/매도 엔드포인트가 인증 없이 열려있으므로 즉시 처리)
-- [ ] 블로그 발행 전 EC2 IP 마스킹 — `13.210.159.103` → `13.x.x.x` 또는 `YOUR_EC2_IP`
-- [ ] `logging.level.root=DEBUG` → `WARN` 으로 변경 후 재배포 — DEBUG 로그에 `authorization: Bearer 토큰값` 이 그대로 app.log에 기록되고 있음
+- [o] AWS 보안 그룹 8080 포트 차단 — 처음부터 보안그룹에 없었음, nginx 80포트로만 접근 (2026-06-30 확인)
+- [ ] 블로그 발행 전 EC2 IP 마스킹 — `13.x.x.x` → `13.x.x.x` 또는 `YOUR_EC2_IP`
+- [o] `logging.level.root=DEBUG` → `WARN` 으로 변경 후 재배포 — 로컬 수정 완료 + EC2 재배포 완료 (2026-06-30)
 
 ### 단기 (CI/CD 작업 전후)
-- [ ] 매수/매도 엔드포인트 API Key 인증 추가 — 헤더 `X-API-KEY` 없으면 403 반환 (인터셉터로 구현)
+- [o] 매수/매도 엔드포인트 API Key 인증 추가 — `ApiKeyInterceptor` + `WebMvcConfig(/api/trade/**)` 구현 완료, `APP_API_KEY` .env 주입 완료 (2026-06-30)
 - [ ] Swagger UI 접근 제한 — 보안 그룹을 내 IP로 좁히면 같이 해결되나, 나중에 공개 시 별도 처리 필요
 
 ### 중기 (로그인 페이지 작업 시)
-- [ ] Spring Security + JWT 로그인 구현
+- [ ] nginx Basic Auth 또는 Spring Security + JWT 로그인 구현 — 어머니 사용 + 포트폴리오 고려, 방식 미결정
 - [ ] 경로별 권한 분리 — `/api/stock/**` 인증 불필요 / `/api/trade/**` 로그인 필수
-- [ ] HTTPS 적용 — nginx 리버스 프록시 설정 시 같이 처리
+- [ ] HTTPS 적용 — Let's Encrypt 무료 인증서, nginx에서 처리
 
 > **주의:** 키움 IP 화이트리스트는 "다른 서버가 키움에 직접 요청하는 것"만 막음.
 > "아무나 내 앱을 거쳐서 키움에 요청하는 것"은 앱 레벨 인증으로 별도로 막아야 함.
@@ -146,24 +150,59 @@ core/src/main/java/hello/coreStock/
 ---
 
 ## EC2 서버 정보
-- IP: 13.210.159.103
+- IP: 13.x.x.x
 - OS: Ubuntu 26.04 LTS
 - Java: OpenJDK 21
-- 포트: 8080
+- 외부 포트: 80 (nginx) / 내부 포트: 8080 (Spring Boot, 외부 미노출)
 - JAR: /home/ubuntu/core-0.0.1-SNAPSHOT.jar
-- 설정: /home/ubuntu/kiwoom_api.yml
-- 로그: /home/ubuntu/app.log
+- 설정: /home/ubuntu/kiwoom_api.yml (환경변수 참조: `${KIWOOM_APP_KEY}`, `${KIWOOM_MY_KEY}`, `${APP_API_KEY}`)
+- 환경변수: /home/ubuntu/.env (chmod 600, `export VAR=값` 형태)
+- 로그: `sudo journalctl -u stockfor -f` (systemd 로그)
 - SSH 키: ~/.ssh/stockFor.pem (WSL 경로)
-- 실행 방식: nohup 백그라운드
+- 실행 방식: systemd 서비스 (`stockfor.service`)
+- 시작 스크립트: /home/ubuntu/start.sh (source .env 후 java 실행)
 
 ### SSH 접속
 ```bash
-ssh -i ~/.ssh/stockFor.pem ubuntu@13.210.159.103
+ssh -i ~/.ssh/stockFor.pem ubuntu@13.x.x.x
 ```
 
 ### 재배포 순서
+```bash
+# 1. 로컬 (core/ 디렉토리)
+./gradlew bootJar
+
+# 2. 로컬 → EC2 JAR 업로드
+scp -i ~/.ssh/stockFor.pem \
+  build/libs/core-0.0.1-SNAPSHOT.jar \
+  ubuntu@13.x.x.x:/home/ubuntu/core-0.0.1-SNAPSHOT.jar
+
+# 3. EC2에서 재시작 (systemd)
+sudo systemctl restart stockfor
 ```
-1. 로컬: ./gradlew bootJar (core/ 디렉토리에서)
-2. 로컬: scp로 JAR 업로드
-3. EC2: 기존 프로세스 kill 후 nohup 재실행
+
+### 서비스 관리 명령어
+```bash
+sudo systemctl start stockfor    # 시작
+sudo systemctl stop stockfor     # 중지
+sudo systemctl restart stockfor  # 재시작
+sudo systemctl status stockfor   # 상태 확인
+sudo journalctl -u stockfor -f   # 실시간 로그
+sudo journalctl -u stockfor -n 50 --no-pager  # 최근 50줄 로그
 ```
+
+### 트러블슈팅 (2026-06-30 기록)
+| 문제 | 원인 | 해결 |
+|---|---|---|
+| `Could not resolve placeholder` | `.env`에 `export` 없어서 Java 프로세스에 환경변수 미전달 | `export VAR=값` 형태로 수정 |
+| `Port 8080 already in use` | 이전 프로세스 살아있음 | `kill -9 $(lsof -t -i:8080)` |
+| `scp: No such file or directory` | EC2에서 scp 실행 | WSL(로컬)에서 실행해야 함 |
+| systemd `EnvironmentFile` 환경변수 미전달 | `export KEY=value` 형식은 systemd가 지원 안 함 | start.sh에서 `source .env` 후 java 실행하는 방식으로 해결 |
+
+### TODO (코드 수정 필요)
+- [o] `spring.jpa.open-in-view=false` — application.properties에 추가 완료, 재배포 완료 (2026-06-30)
+- [o] `System.out.println` → `log` 교체 완료 (2026-07-01)
+  - `KiwoomController`: appkey/mykey 출력 삭제(보안), 나머지 → `log.debug()`
+  - `TokenService`: 토큰발급 성공 → `log.info()`
+  - `StockService`: 테스트 URL → `log.debug()`
+- [ ] `stock_prices` 테이블 용도 확인 — H2 인메모리라 재시작 시 데이터 사라짐, 실제 사용 여부 확인 필요 (보류 중)

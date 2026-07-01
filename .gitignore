@@ -1,6 +1,8 @@
 # 민감한 설정 파일 (API 키, 비밀번호)
-core/src/main/resources/application.properties
 core/src/main/resources/kiwoom_api.yml
+
+# 작업 로그 파일
+log_*.md
 
 # IDE 설정
 .idea/
