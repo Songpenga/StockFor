@@ -140,7 +140,10 @@ core/src/main/java/hello/coreStock/
 - [o] EC2에 Docker 설치 완료 (2026-07-01) — Docker 29.1.3, Compose v2 2.40.3
 - [o] EC2에서 git clone 후 docker compose up 실행 — 기존 systemd 서비스 교체 완료 (2026-07-13). `stockfor-app`/`stockfor-nginx` 컨테이너로 전환, ka10001 삼성전자 기본정보 조회로 동작 확인
 - [ ] AWS CloudWatch 연동 — 로그 모니터링
-- [ ] GitHub Actions CI/CD 구성
+- [ ] GitHub Actions CI/CD 구성 — 워크플로우 작성 완료 (2026-07-13), GitHub Secrets 등록 및 실제 배포 실행 확인 남음
+  - `.github/workflows/ci.yml`: main push/PR 시 `./gradlew build` 자동 실행
+  - `.github/workflows/deploy.yml`: 수동 실행(workflow_dispatch) 시 JAR 빌드 → EC2 scp 전송 → `git pull` + `docker compose build && up -d`
+  - 필요한 Secrets: `EC2_HOST`, `EC2_USER`, `EC2_SSH_KEY` (직접 GitHub 웹에서 등록 필요)
 
 ## 보안 TODO
 
