@@ -138,7 +138,7 @@ core/src/main/java/hello/coreStock/
 - [o] nginx 리버스 프록시 설정 — 80포트로 8080 포워딩 완료 (2026-06-30)
 - [o] systemd 서비스 등록 — start.sh 방식으로 EC2 재시작 시 자동 실행, 앱 죽으면 자동 재시작 (2026-06-30)
 - [o] EC2에 Docker 설치 완료 (2026-07-01) — Docker 29.1.3, Compose v2 2.40.3
-- [ ] EC2에서 git clone 후 docker compose up 실행 — 기존 systemd 서비스 교체
+- [o] EC2에서 git clone 후 docker compose up 실행 — 기존 systemd 서비스 교체 완료 (2026-07-13). `stockfor-app`/`stockfor-nginx` 컨테이너로 전환, ka10001 삼성전자 기본정보 조회로 동작 확인
 - [ ] AWS CloudWatch 연동 — 로그 모니터링
 - [ ] GitHub Actions CI/CD 구성
 
@@ -166,15 +166,15 @@ core/src/main/java/hello/coreStock/
 ## EC2 서버 정보
 - IP: 13.x.x.x
 - OS: Ubuntu 26.04 LTS
-- Java: OpenJDK 21
-- 외부 포트: 80 (nginx) / 내부 포트: 8080 (Spring Boot, 외부 미노출)
-- JAR: /home/ubuntu/core-0.0.1-SNAPSHOT.jar
+- Java: OpenJDK 21 (컨테이너 내부, 호스트에는 불필요)
+- 외부 포트: 80 (nginx 컨테이너) / 내부 포트: 8080 (springboot 컨테이너, 외부 미노출)
+- 저장소: /home/ubuntu/StockFor (git clone)
+- JAR: /home/ubuntu/StockFor/core/build/libs/core-0.0.1-SNAPSHOT.jar (로컬에서 빌드 후 scp로 전송, 컨테이너 내부 빌드 안 함 — EC2 저사양 메모리 제약)
 - 설정: /home/ubuntu/kiwoom_api.yml (환경변수 참조: `${KIWOOM_APP_KEY}`, `${KIWOOM_MY_KEY}`, `${APP_API_KEY}`)
-- 환경변수: /home/ubuntu/.env (chmod 600, `export VAR=값` 형태)
-- 로그: `sudo journalctl -u stockfor -f` (systemd 로그)
+- 환경변수: /home/ubuntu/.env (chmod 600, `KEY=value` 형태 — docker compose `env_file`은 `export` 미지원, 2026-07-13부터 export 제거)
+- 로그: `docker compose logs -f springboot` (2026-07-13부터, 기존 journalctl 아님)
 - SSH 키: ~/.ssh/stockFor.pem (WSL 경로)
-- 실행 방식: systemd 서비스 (`stockfor.service`)
-- 시작 스크립트: /home/ubuntu/start.sh (source .env 후 java 실행)
+- 실행 방식: Docker Compose (`stockfor-app`, `stockfor-nginx` 컨테이너) — 2026-07-13부터, 기존 systemd(`stockfor.service`)는 stop/disable 처리
 
 ### SSH 접속
 ```bash
@@ -188,21 +188,24 @@ ssh -i ~/.ssh/stockFor.pem ubuntu@13.x.x.x
 
 # 2. 로컬 → EC2 JAR 업로드
 scp -i ~/.ssh/stockFor.pem \
-  build/libs/core-0.0.1-SNAPSHOT.jar \
-  ubuntu@13.x.x.x:/home/ubuntu/core-0.0.1-SNAPSHOT.jar
+  core/build/libs/core-0.0.1-SNAPSHOT.jar \
+  ubuntu@13.x.x.x:/home/ubuntu/StockFor/core/build/libs/core-0.0.1-SNAPSHOT.jar
 
-# 3. EC2에서 재시작 (systemd)
-sudo systemctl restart stockfor
+# 3. EC2에서 최신 코드 반영 및 재빌드
+cd /home/ubuntu/StockFor
+git pull
+docker compose build
+docker compose up -d
 ```
 
 ### 서비스 관리 명령어
 ```bash
-sudo systemctl start stockfor    # 시작
-sudo systemctl stop stockfor     # 중지
-sudo systemctl restart stockfor  # 재시작
-sudo systemctl status stockfor   # 상태 확인
-sudo journalctl -u stockfor -f   # 실시간 로그
-sudo journalctl -u stockfor -n 50 --no-pager  # 최근 50줄 로그
+docker compose up -d          # 시작 (백그라운드)
+docker compose down           # 중지 및 컨테이너 제거
+docker compose restart        # 재시작
+docker compose ps             # 상태 확인
+docker compose logs -f springboot   # 실시간 로그 (springboot)
+docker compose logs --tail=50 springboot  # 최근 50줄 로그
 ```
 
 ### 트러블슈팅 (2026-06-30 기록)
@@ -212,6 +215,7 @@ sudo journalctl -u stockfor -n 50 --no-pager  # 최근 50줄 로그
 | `Port 8080 already in use` | 이전 프로세스 살아있음 | `kill -9 $(lsof -t -i:8080)` |
 | `scp: No such file or directory` | EC2에서 scp 실행 | WSL(로컬)에서 실행해야 함 |
 | systemd `EnvironmentFile` 환경변수 미전달 | `export KEY=value` 형식은 systemd가 지원 안 함 | start.sh에서 `source .env` 후 java 실행하는 방식으로 해결 |
+| docker compose `env_file` 환경변수 미전달 (2026-07-13) | `.env`에 systemd용 `export KEY=value` 형식이 남아있었음 — docker compose의 `env_file`은 `export` 접두사를 지원하지 않음 | `.env`에서 `export ` 접두사 제거, 중복 줄 정리 (`KEY=value` 형식으로) |
 
 ### TODO (코드 수정 필요)
 - [o] `spring.jpa.open-in-view=false` — application.properties에 추가 완료, 재배포 완료 (2026-06-30)
@@ -221,5 +225,5 @@ sudo journalctl -u stockfor -n 50 --no-pager  # 최근 50줄 로그
   - `StockService`: 테스트 URL → `log.debug()`
 - [o] CORS 설정 추가 (2026-07-01) — `WebMvcConfig.addCorsMappings()`, 환경변수 `CORS_ALLOWED_ORIGINS` 주입
 - [o] `application.properties` gitignore 제거 후 커밋 (2026-07-01) — 키움 API 키는 `kiwoom_api.yml`에만 존재
-- [ ] EC2 `.env`에 `CORS_ALLOWED_ORIGINS=http://13.x.x.x` 추가 필요 (docker compose 실행 전)
+- [o] EC2 `.env`에 `CORS_ALLOWED_ORIGINS=http://13.x.x.x` 추가 완료 (2026-07-13)
 - [ ] `stock_prices` 테이블 용도 확인 — H2 인메모리, 공공데이터 API 연동 기능 보류 중
