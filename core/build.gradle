@@ -27,11 +27,6 @@ dependencies {
 	// Spring Web 추가 (REST API용)
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 
-	// Spring Data JPA 추가 (JPA 어노테이션 및 Repository용)
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	// 개발용 내장 DB (DataSource 미설정 시 필요)
-	runtimeOnly 'com.h2database:h2'
-
 	//lombok 라이브러리 추가 시작
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
