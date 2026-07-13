@@ -59,7 +59,7 @@ public class coreStock {
         doNothing().when(stockService).saveStockData(testDate);
 
         // when & then
-        mockMvc.perform(get("/fetch")
+        mockMvc.perform(get("/api/stocks/fetch")
                         .param("date", testDate))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
