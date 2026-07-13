@@ -9,6 +9,18 @@
 - 키움증권 REST API (https://api.kiwoom.com)
 - 모의투자 도메인: https://mockapi.kiwoom.com
 
+## 프로젝트 구조
+
+```
+StockFor/
+├── core/
+│   ├── Dockerfile                        # 멀티스테이지 빌드 (gradle:8-jdk21 → eclipse-temurin:21-jre)
+│   └── src/main/java/hello/coreStock/
+├── nginx/
+│   └── default.conf                      # Docker용 nginx 설정 (proxy → springboot:8080)
+└── docker-compose.yml                    # springboot + nginx 컨테이너 구성
+```
+
 ## 프로젝트 구조 (core 모듈)
 
 ```
@@ -125,6 +137,8 @@ core/src/main/java/hello/coreStock/
 - [o] API 정상 동작 확인 — ka10001 삼성전자 기본정보 조회 성공
 - [o] nginx 리버스 프록시 설정 — 80포트로 8080 포워딩 완료 (2026-06-30)
 - [o] systemd 서비스 등록 — start.sh 방식으로 EC2 재시작 시 자동 실행, 앱 죽으면 자동 재시작 (2026-06-30)
+- [o] EC2에 Docker 설치 완료 (2026-07-01) — Docker 29.1.3, Compose v2 2.40.3
+- [ ] EC2에서 git clone 후 docker compose up 실행 — 기존 systemd 서비스 교체
 - [ ] AWS CloudWatch 연동 — 로그 모니터링
 - [ ] GitHub Actions CI/CD 구성
 
@@ -205,4 +219,7 @@ sudo journalctl -u stockfor -n 50 --no-pager  # 최근 50줄 로그
   - `KiwoomController`: appkey/mykey 출력 삭제(보안), 나머지 → `log.debug()`
   - `TokenService`: 토큰발급 성공 → `log.info()`
   - `StockService`: 테스트 URL → `log.debug()`
-- [ ] `stock_prices` 테이블 용도 확인 — H2 인메모리라 재시작 시 데이터 사라짐, 실제 사용 여부 확인 필요 (보류 중)
+- [o] CORS 설정 추가 (2026-07-01) — `WebMvcConfig.addCorsMappings()`, 환경변수 `CORS_ALLOWED_ORIGINS` 주입
+- [o] `application.properties` gitignore 제거 후 커밋 (2026-07-01) — 키움 API 키는 `kiwoom_api.yml`에만 존재
+- [ ] EC2 `.env`에 `CORS_ALLOWED_ORIGINS=http://13.x.x.x` 추가 필요 (docker compose 실행 전)
+- [ ] `stock_prices` 테이블 용도 확인 — H2 인메모리, 공공데이터 API 연동 기능 보류 중
