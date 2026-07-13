@@ -151,7 +151,7 @@ core/src/main/java/hello/coreStock/
 
 ### 지금 당장
 - [o] AWS 보안 그룹 8080 포트 차단 — 처음부터 보안그룹에 없었음, nginx 80포트로만 접근 (2026-06-30 확인)
-- [ ] 블로그 발행 전 EC2 IP 마스킹 — `13.x.x.x` → `13.x.x.x` 또는 `YOUR_EC2_IP`
+- [ ] 블로그 발행 전 EC2 IP 마스킹 — 현재 파일 기준으로는 마스킹 완료. 단, git 히스토리(`log_aws_20260618_1544.md` 등 과거 커밋)에 실제 IP가 남아있음 확인 (2026-07-13). 저장소가 public이라 완전히 가려지진 않음 — 보안그룹/API Key 인증으로 위험도는 낮다고 판단해 우선순위 낮춤. 추후 EC2 Elastic IP 재발급으로 기존 IP 무효화 예정
 - [o] `logging.level.root=DEBUG` → `WARN` 으로 변경 후 재배포 — 로컬 수정 완료 + EC2 재배포 완료 (2026-06-30)
 
 ### 단기 (CI/CD 작업 전후)
@@ -231,4 +231,8 @@ docker compose logs --tail=50 springboot  # 최근 50줄 로그
 - [o] CORS 설정 추가 (2026-07-01) — `WebMvcConfig.addCorsMappings()`, 환경변수 `CORS_ALLOWED_ORIGINS` 주입
 - [o] `application.properties` gitignore 제거 후 커밋 (2026-07-01) — 키움 API 키는 `kiwoom_api.yml`에만 존재
 - [o] EC2 `.env`에 `CORS_ALLOWED_ORIGINS=http://13.x.x.x` 추가 완료 (2026-07-13)
-- [ ] `stock_prices` 테이블 용도 확인 — H2 인메모리, 공공데이터 API 연동 기능 보류 중
+- [o] `stock_prices` 테이블 용도 확인 및 정리 완료 (2026-07-13) — data.go.kr(공공데이터포털) 연동 기능이었으나 Kiwoom API와 무관한 독립 기능이고, H2 인메모리라 재배포 시 데이터 유실되는 구조라 실사용 가치 낮다고 판단해 전체 삭제
+  - 조사 중 `application.properties`에 data.go.kr API 키(`stock.api.key_in/key_de`)가 평문으로 커밋되어 있던 것 발견(public 저장소 노출) — 기능 자체를 삭제하는 것으로 대응
+  - 삭제: `StockController`, `StockService`, `StockPrice`(유일한 JPA 엔티티), `StockPriceRepository`, `StockApiResponseDto`, `StockApiItemDto`, 관련 테스트
+  - `build.gradle`에서 `spring-boot-starter-data-jpa`, `h2` 의존성 제거, `application.properties`에서 `spring.datasource.*`/`spring.jpa.*` 제거
+  - ⚠️ data.go.kr 서비스 키는 git 히스토리에는 남아있음 — 마이페이지에서 재발급(폐기) 권장, 아직 미완료
