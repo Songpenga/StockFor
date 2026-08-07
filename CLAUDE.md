@@ -14,11 +14,11 @@
 ```
 StockFor/
 ├── core/
-│   ├── Dockerfile                        # 멀티스테이지 빌드 (gradle:8-jdk21 → eclipse-temurin:21-jre)
+│   ├── Dockerfile                        # 로컬 빌드 JAR 복사 방식 (eclipse-temurin:21-jre)
 │   └── src/main/java/hello/coreStock/
 ├── nginx/
 │   └── default.conf                      # Docker용 nginx 설정 (proxy → springboot:8080)
-└── docker-compose.yml                    # springboot + nginx 컨테이너 구성
+└── docker-compose.yml                    # postgres + springboot + nginx 컨테이너 구성
 ```
 
 ## 프로젝트 구조 (core 모듈)
@@ -42,11 +42,17 @@ core/src/main/java/hello/coreStock/
 ├── Dto/
 │   ├── sellNBuyOrderRequestDto.java  # 매수/매도 요청 DTO
 │   ├── editOrderRequestDto.java      # 정정 요청 DTO
-│   └── cancelOrderRequestDto.java    # 취소 요청 DTO
+│   ├── cancelOrderRequestDto.java    # 취소 요청 DTO
+│   └── RankItemResponse.java         # 거래대금상위(ka10032) 응답 DTO (record)
 ├── interceptor/
 │   └── ApiKeyInterceptor.java        # X-API-KEY 헤더 인증 (/api/trade/**)
 ├── config/
 │   └── WebMvcConfig.java             # 인터셉터 경로 등록
+├── Repository/
+│   ├── UserRepository.java           # users 테이블 (로그인 로직은 미구현)
+│   └── LoginLogRepository.java       # login_log 테이블
+├── User.java                         # users 테이블 엔티티 (no/id/pw/pinpw)
+├── LoginLog.java                     # login_log 테이블 엔티티 (no/access_ip/access_time/user_id)
 └── RestTemplateConfig.java
 ```
 
@@ -67,7 +73,7 @@ core/src/main/java/hello/coreStock/
 | ka10023 | 거래량급증요청 | fn_ka10023 | ✅ |
 | ka10027 | 전일대비등락률상위요청 | fn_ka10027 | ✅ |
 | ka10030 | 당일거래량상위요청 | fn_ka10030 | ✅ |
-| ka10032 | 거래대금상위요청 | fn_ka10032 | ✅ |
+| ka10032 | 거래대금상위요청 | fn_ka10032 | ✅ (컨트롤러에서 `RankItemResponse` DTO로 변환 후 반환, 2026-07-15) |
 | ka10095 | 관심종목정보요청 | fn_ka10095 | ✅ |
 | ka10100 | 종목정보조회 | fn_ka10100 | ✅ |
 | ka10101 | 업종코드 리스트 | fn_ka10101 | ✅ |
@@ -126,6 +132,19 @@ core/src/main/java/hello/coreStock/
 - [o] `fn_ka40004` 파라미터 하드코딩 → 파라미터화
 - [o] 순위정보 TR 추가 — ka10023(거래량급증), ka10027(등락률상위), ka10030(거래량상위), ka10032(거래대금상위)
 
+### 로컬 개발 환경 (VS Code)
+- [o] Postgres 없이 로컬에서 조회 API만 테스트할 수 있는 `local` 프로필 구성 (2026-07-15)
+  - `core/src/main/resources/application-local.properties` — DataSource/Hibernate/JpaRepositories 자동설정 제외 + 로컬 `kiwoom_api.yml`(classpath) 사용
+  - `.vscode/launch.json` — `SPRING_PROFILES_ACTIVE=local`로 실행하는 설정 추가
+  - `application.properties`(배포용 공유 파일)는 그대로 두고 프로필로만 분리 — 운영(docker-compose)은 이 프로필을 켜지 않아 영향 없음
+  - 실행: `SPRING_PROFILES_ACTIVE=local ./gradlew bootRun` (VS Code "Run and Debug" 패널로 실행하려면 Java 디버거 확장 필요, 터미널 실행은 확장 불필요)
+
+### 프론트엔드(Vue) 연동 준비
+- [o] ka10032(거래대금상위) — `KiwoomStockController`에서 `KiwoomSTKInfoService.fn_ka10032`가 반환한 raw JSON을 파싱해 `RankItemResponse` record(rank/code/name/currentPrice/changeRate)로 변환 후 반환하도록 변경 (2026-07-15). 키움 응답의 `+`/`-` 부호 붙은 숫자 문자열은 `Long.parseLong`/`Double.parseDouble`이 선행 부호를 그대로 처리해 별도 파싱 로직 불필요함을 확인
+- [ ] 나머지 9개 조회 TR(ka10023, ka10027, ka10030, ka10095, ka10099, ka10001, ka10003, ka10100, ka10101)은 아직 raw String 그대로 반환 — 프론트에서 필요해질 때마다 같은 패턴으로 순차 변환 예정. TR마다 필드가 완전히 달라 10개를 하나의 공용 DTO/제네릭 파싱 헬퍼로 통합하는 건 시기상조로 판단해 보류 (2~3번째 변환 시 반복 패턴 보이면 그때 추출)
+- [ ] Vue `SearchView.vue` 거래대금 탭에 `GET /api/stock/trading-value-ranking` 실제 연동 (StockFor 저장소 밖 작업)
+- [ ] `/api/trade/**` 제외한 조회 API만 프론트에 문서로 공유하는 방법(springdoc-openapi `GroupedOpenApi` 등)은 검토만 하고 보류 — 지금 규모엔 과함
+
 ### EC2 배포를 위해 해야 하는 작업
 - [o] EC2 인스턴스 생성 (Ubuntu 26.04 LTS)
 - [o] EC2에 Java 설치 (OpenJDK 21)
@@ -159,9 +178,12 @@ core/src/main/java/hello/coreStock/
 - [ ] Swagger UI 접근 제한 — 보안 그룹을 내 IP로 좁히면 같이 해결되나, 나중에 공개 시 별도 처리 필요
 
 ### 중기 (로그인 페이지 작업 시)
-- [ ] nginx Basic Auth 또는 Spring Security + JWT 로그인 구현 — 어머니 사용 + 포트폴리오 고려, 방식 미결정
-- [ ] 경로별 권한 분리 — `/api/stock/**` 인증 불필요 / `/api/trade/**` 로그인 필수
-- [ ] HTTPS 적용 — Let's Encrypt 무료 인증서, nginx에서 처리
+- [ ] nginx Basic Auth 또는 Spring Security + JWT 로그인 구현 — 방식은 **JWT로 방향 결정** (2026-07-13). Vue 프론트와 API가 다른 origin인데 HTTPS가 아직 없어서 세션 쿠키 방식은 SameSite 정책 때문에 cross-origin에서 동작 안 함 → JWT는 헤더 기반이라 HTTPS 유무와 무관하게 지금 바로 동작 가능해서 채택
+  - [o] PostgreSQL 컨테이너 및 `users`(no/id/pw/pinpw), `login_log`(no/access_ip/access_time/user_id) 테이블·엔티티·Repository 준비 완료 (2026-07-13) — `User.java`, `LoginLog.java`, `Repository/UserRepository.java`, `Repository/LoginLogRepository.java`
+  - [ ] 실제 로그인 로직(Spring Security + JWT 발급/검증, 비밀번호 BCrypt 인코딩, 계정 시딩)은 다음 단계에서 진행 — 아직 미착수
+  - [ ] EC2 `/home/ubuntu/.env`에 `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` 추가 필요 (배포 전)
+- [ ] 경로별 권한 분리 — `/api/stock/**` 인증 불필요 / `/api/trade/**` 로그인 필수 (로그인 로직과 함께 진행 예정)
+- [ ] HTTPS 적용 — Let's Encrypt 무료 인증서, nginx에서 처리 (도메인 필요, DuckDNS 등 무료 서브도메인 고려 중)
 
 > **주의:** 키움 IP 화이트리스트는 "다른 서버가 키움에 직접 요청하는 것"만 막음.
 > "아무나 내 앱을 거쳐서 키움에 요청하는 것"은 앱 레벨 인증으로 별도로 막아야 함.
@@ -179,7 +201,8 @@ core/src/main/java/hello/coreStock/
 - 환경변수: /home/ubuntu/.env (chmod 600, `KEY=value` 형태 — docker compose `env_file`은 `export` 미지원, 2026-07-13부터 export 제거)
 - 로그: `docker compose logs -f springboot` (2026-07-13부터, 기존 journalctl 아님)
 - SSH 키: ~/.ssh/stockFor.pem (WSL 경로)
-- 실행 방식: Docker Compose (`stockfor-app`, `stockfor-nginx` 컨테이너) — 2026-07-13부터, 기존 systemd(`stockfor.service`)는 stop/disable 처리
+- 실행 방식: Docker Compose (`stockfor-app`, `stockfor-nginx`, `stockfor-postgres` 컨테이너) — 2026-07-13부터, 기존 systemd(`stockfor.service`)는 stop/disable 처리
+- PostgreSQL 데이터: `/home/ubuntu/postgres-data` (바인드 마운트, 컨테이너 재생성해도 유지됨)
 
 ### SSH 접속
 ```bash
@@ -235,4 +258,4 @@ docker compose logs --tail=50 springboot  # 최근 50줄 로그
   - 조사 중 `application.properties`에 data.go.kr API 키(`stock.api.key_in/key_de`)가 평문으로 커밋되어 있던 것 발견(public 저장소 노출) — 기능 자체를 삭제하는 것으로 대응
   - 삭제: `StockController`, `StockService`, `StockPrice`(유일한 JPA 엔티티), `StockPriceRepository`, `StockApiResponseDto`, `StockApiItemDto`, 관련 테스트
   - `build.gradle`에서 `spring-boot-starter-data-jpa`, `h2` 의존성 제거, `application.properties`에서 `spring.datasource.*`/`spring.jpa.*` 제거
-  - ⚠️ data.go.kr 서비스 키는 git 히스토리에는 남아있음 — 마이페이지에서 재발급(폐기) 권장, 아직 미완료
+  - [o] data.go.kr 서비스 키 재발급(기존 노출 키 폐기) 완료 (2026-07-13) — git 히스토리에 남은 옛 키값은 이미 무효화되어 더 이상 위험하지 않음

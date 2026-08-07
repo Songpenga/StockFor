@@ -1,0 +1,15 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "CoreStickApplication (local)",
+            "request": "launch",
+            "mainClass": "hello.coreStock.CoreStickApplication",
+            "projectName": "core",
+            "env": {
+                "SPRING_PROFILES_ACTIVE": "local"
+            }
+        }
+    ]
+}

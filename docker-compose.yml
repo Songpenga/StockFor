@@ -1,4 +1,15 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: stockfor-postgres
+    expose:
+      - "5432"
+    env_file:
+      - /home/ubuntu/.env
+    volumes:
+      - /home/ubuntu/postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
   springboot:
     build: ./core
     container_name: stockfor-app
@@ -8,6 +19,8 @@ services:
       - /home/ubuntu/kiwoom_api.yml:/config/kiwoom_api.yml:ro
     env_file:
       - /home/ubuntu/.env
+    depends_on:
+      - postgres
     restart: unless-stopped
 
   nginx:

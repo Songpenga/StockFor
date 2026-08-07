@@ -1,10 +1,15 @@
 package hello.coreStock.Controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import hello.coreStock.Dto.RankItemResponse;
 import hello.coreStock.Service.KiwoomSTKInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /*
@@ -16,6 +21,9 @@ public class KiwoomStockController {
 
     @Autowired
     private KiwoomSTKInfoService stkInfoService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     //실시간종목조회순위
     @GetMapping("/ranking")
@@ -148,7 +156,19 @@ public class KiwoomStockController {
             @RequestParam(name = "stexTp", defaultValue = "3") String stexTp) {
         try {
             String result = stkInfoService.fn_ka10032(mrktTp, mangStkIncls, stexTp);
-            return ResponseEntity.ok(result);
+            JsonNode root = objectMapper.readTree(result);
+
+            List<RankItemResponse> rankings = new ArrayList<>();
+            for (JsonNode item : root.get("trde_prica_upper")) {
+                rankings.add(new RankItemResponse(
+                        item.get("now_rank").asInt(),
+                        item.get("stk_cd").asText(),
+                        item.get("stk_nm").asText(),
+                        Long.parseLong(item.get("cur_prc").asText()),
+                        Double.parseDouble(item.get("flu_rt").asText())
+                ));
+            }
+            return ResponseEntity.ok(rankings);
         } catch (Exception e) {
             return ResponseEntity.status(500)
                     .body(Map.of("error", e.getMessage()));
