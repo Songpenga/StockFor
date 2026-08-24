@@ -3,7 +3,11 @@ package hello.coreStock.Controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hello.coreStock.Dto.RankItemResponse;
+import hello.coreStock.Dto.SearchRankItemResponse;
+import hello.coreStock.Dto.StockBasicInfoResponse;
 import hello.coreStock.Service.KiwoomSTKInfoService;
+import static hello.coreStock.util.KiwoomValueUtils.parseVolume;
+import static hello.coreStock.util.StockCodeUtils.bareCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,12 +29,29 @@ public class KiwoomStockController {
     @Autowired
     private ObjectMapper objectMapper;
 
-    //실시간종목조회순위
+    //실시간종목조회순위 (ka00198) -> 프론트 "검색 상위" 위젯용 SearchRankItemResponse로 변환
     @GetMapping("/ranking")
     public ResponseEntity<?> getRanking(@RequestParam(name = "queryType", defaultValue = "1") String queryType) {
         try {
             String result = stkInfoService.fn_ka00198(queryType);
-            return ResponseEntity.ok(result);
+            JsonNode root = objectMapper.readTree(result);
+
+            List<SearchRankItemResponse> rankings = new ArrayList<>();
+            for (JsonNode item : root.get("item_inq_rank")) {
+                String rankChgText = item.get("rank_chg").asText();
+                String stkCd = item.get("stk_cd").asText();
+                rankings.add(new SearchRankItemResponse(
+                        item.get("bigd_rank").asInt(),
+                        stkCd,
+                        bareCode(stkCd),
+                        item.get("stk_nm").asText(),
+                        Math.abs(Long.parseLong(item.get("past_curr_prc").asText())),
+                        Double.parseDouble(item.get("base_comp_chgr").asText()),
+                        rankChgText.isEmpty() ? 0 : Integer.parseInt(rankChgText),
+                        item.get("rank_chg_sign").asText()
+                ));
+            }
+            return ResponseEntity.ok(rankings);
         } catch (Exception e) {
             return ResponseEntity.status(500)
                     .body(Map.of("error", e.getMessage()));
@@ -50,12 +71,29 @@ public class KiwoomStockController {
         }
     }
 
-    //주식기본정보조회
+    //주식기본정보조회 (ka10001) -> StockBasicInfoResponse로 변환
     @GetMapping("/basic-info/{stockCode}")
     public ResponseEntity<?> StockBasicInfoController(@PathVariable String stockCode) {
         try {
             String result = stkInfoService.fn_ka10001(stockCode);
-            return ResponseEntity.ok(result);
+            JsonNode root = objectMapper.readTree(result);
+
+            Long volume = parseVolume(root.get("trde_qty").asText());
+
+            String stkCd = root.get("stk_cd").asText();
+            StockBasicInfoResponse response = new StockBasicInfoResponse(
+                    stkCd,
+                    bareCode(stkCd),
+                    root.get("stk_nm").asText(),
+                    Math.abs(Long.parseLong(root.get("cur_prc").asText())),
+                    Long.parseLong(root.get("pred_pre").asText()),
+                    Double.parseDouble(root.get("flu_rt").asText()),
+                    Math.abs(Long.parseLong(root.get("open_pric").asText())),
+                    Math.abs(Long.parseLong(root.get("high_pric").asText())),
+                    Math.abs(Long.parseLong(root.get("low_pric").asText())),
+                    volume
+            );
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(500)
                     .body(Map.of("error", e.getMessage()));
@@ -127,7 +165,7 @@ public class KiwoomStockController {
         }
     }
 
-    // 당일거래량상위요청 (ka10030)
+    // 당일거래량상위요청 (ka10030) -> 프론트 "거래량 상위" 위젯용 RankItemResponse로 변환
     @GetMapping("/volume-ranking")
     public ResponseEntity<?> getDailyVolumeRanking(
             @RequestParam(name = "mrktTp", defaultValue = "000") String mrktTp,
@@ -141,7 +179,22 @@ public class KiwoomStockController {
             @RequestParam(name = "stexTp", defaultValue = "3") String stexTp) {
         try {
             String result = stkInfoService.fn_ka10030(mrktTp, sortTp, mangStkIncls, crdTp, trdeQtyTp, pricTp, trdePricaTp, mrktOpenTp, stexTp);
-            return ResponseEntity.ok(result);
+            JsonNode root = objectMapper.readTree(result);
+
+            List<RankItemResponse> rankings = new ArrayList<>();
+            int rank = 1;
+            for (JsonNode item : root.get("tdy_trde_qty_upper")) {
+                String stkCd = item.get("stk_cd").asText();
+                rankings.add(new RankItemResponse(
+                        rank++,
+                        stkCd,
+                        bareCode(stkCd),
+                        item.get("stk_nm").asText(),
+                        Math.abs(Long.parseLong(item.get("cur_prc").asText())),
+                        Double.parseDouble(item.get("flu_rt").asText())
+                ));
+            }
+            return ResponseEntity.ok(rankings);
         } catch (Exception e) {
             return ResponseEntity.status(500)
                     .body(Map.of("error", e.getMessage()));
@@ -160,11 +213,13 @@ public class KiwoomStockController {
 
             List<RankItemResponse> rankings = new ArrayList<>();
             for (JsonNode item : root.get("trde_prica_upper")) {
+                String stkCd = item.get("stk_cd").asText();
                 rankings.add(new RankItemResponse(
                         item.get("now_rank").asInt(),
-                        item.get("stk_cd").asText(),
+                        stkCd,
+                        bareCode(stkCd),
                         item.get("stk_nm").asText(),
-                        Long.parseLong(item.get("cur_prc").asText()),
+                        Math.abs(Long.parseLong(item.get("cur_prc").asText())),
                         Double.parseDouble(item.get("flu_rt").asText())
                 ));
             }
