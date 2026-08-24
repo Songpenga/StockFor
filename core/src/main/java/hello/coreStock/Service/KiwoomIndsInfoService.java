@@ -44,4 +44,16 @@ public class KiwoomIndsInfoService extends KiwoomApiService {
         return callKiwoomAPI("/api/dostk/sect", "ka20009", jsonData);
     }
 
+    /*
+    * mrkt_tp | 0:코스피, 1:코스닥, 2:코스피200 (실측 결과 응답에 영향 없음 - inds_cd가 실질적으로 시장을 결정)
+    * inds_cd | 001:코스피, 101:코스닥
+    * */
+    //전업종지수요청 - 해당 시장에 속한 모든 업종의 현재 지수를 한 번에 반환
+    public String fn_ka20003(String mrkt_tp, String inds_cd) {
+        String jsonData = String.format(
+                "{\"mrkt_tp\":\"%s\",\"inds_cd\":\"%s\"}",
+                mrkt_tp, inds_cd);
+        return callKiwoomAPI("/api/dostk/sect", "ka20003", jsonData);
+    }
+
 }
